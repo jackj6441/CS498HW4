@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.DS_Store
+.venv/
+venv/
+taxi_trips.csv
+taxi_trips_clean.csv
