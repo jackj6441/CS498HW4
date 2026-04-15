@@ -35,6 +35,6 @@ This repository contains the scaffold for HW4, which combines:
 
 ## Processed Data Output
 
-The screenshot below shows the contents of `processed_data/`, including `_SUCCESS` and the first lines of a `part-*` JSON file.
+The screenshot below shows the contents of `processed_data/`, including `_SUCCESS` and the first lines of a `part-*` JSON file. 
 
-![processed_data output](processed_data_screenshot.svg)
+![processed_data output](picture.png)
