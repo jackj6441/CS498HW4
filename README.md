@@ -23,7 +23,7 @@ This repository contains the scaffold for HW4, which combines:
 
 - Scaffold created
 - Business logic still needs implementation
-- `processed_data/` screenshot still needs to be added after Spark output is generated
+- `processed_data/` output proof added below
 
 ## Run Plan
 
@@ -33,10 +33,8 @@ This repository contains the scaffold for HW4, which combines:
 4. Start `app.py` on `0.0.0.0:5000`
 5. Fill in `Team.txt`, `HW4.txt`, `fdb_answers.txt`, and finalize `Design.pdf`
 
-## Screenshot Placeholder
+## Processed Data Output
 
-Add the required screenshot of:
+The screenshot below shows the contents of `processed_data/`, including `_SUCCESS` and the first lines of a `part-*` JSON file.
 
-- the `processed_data/` directory contents
-- the `_SUCCESS` marker
-- one `part-*` JSON output file content
+![processed_data output](processed_data_screenshot.svg)
