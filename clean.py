@@ -14,16 +14,16 @@ SOURCE_COLUMNS = [
     "Fare",
     "Trip Seconds",
 ]
-RENAMED_COLUMNS = [
-    "trip_id",
-    "driver_id",
-    "company",
-    "pickup_area",
-    "dropoff_area",
-    "fare",
-    "trip_seconds",
-]
-CAST_DTYPES = {
+RENAME_MAP = {
+    "Trip ID": "trip_id",
+    "Taxi ID": "driver_id",
+    "Company": "company",
+    "Pickup Community Area": "pickup_area",
+    "Dropoff Community Area": "dropoff_area",
+    "Fare": "fare",
+    "Trip Seconds": "trip_seconds",
+}
+NUMERIC_TYPES = {
     "pickup_area": int,
     "dropoff_area": int,
     "fare": float,
@@ -42,17 +42,13 @@ def main() -> None:
         print(f"Error: failed to read required columns from {INPUT_CSV}: {exc}")
         raise SystemExit(1)
 
-    df = df[SOURCE_COLUMNS]
-    df.columns = RENAMED_COLUMNS
-    df = df.dropna(subset=RENAMED_COLUMNS)
-    df = df.astype(CAST_DTYPES)
-    df = df[(df["fare"] > 0) & (df["trip_seconds"] > 0)]
-    df = df.head(10_000)
+    df = df[SOURCE_COLUMNS].rename(columns=RENAME_MAP)
+    df = df.dropna()
+    df = df.astype(NUMERIC_TYPES)
+    df = df[(df["fare"] > 0) & (df["trip_seconds"] > 0)].head(10_000)
 
     df.to_csv(OUTPUT_CSV, index=False)
-    print(
-        f"Success: cleaned data saved to {OUTPUT_CSV} with {len(df)} rows."
-    )
+    print(f"Success: cleaned data saved to {OUTPUT_CSV} with {len(df)} rows.")
 
 
 if __name__ == "__main__":

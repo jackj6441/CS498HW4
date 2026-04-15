@@ -2,19 +2,16 @@ from flask import Flask, jsonify, request
 
 
 app = Flask(__name__)
+TODO_MESSAGE = "Endpoint scaffold created. Query logic still needs implementation."
 
 
-def todo_response(endpoint: str):
-    return (
-        jsonify(
-            {
-                "status": "todo",
-                "endpoint": endpoint,
-                "message": "Endpoint scaffold created. Query logic still needs implementation.",
-            }
-        ),
-        501,
-    )
+def todo_response(endpoint):
+    payload = {
+        "status": "todo",
+        "endpoint": endpoint,
+        "message": TODO_MESSAGE,
+    }
+    return jsonify(payload), 501
 
 
 @app.get("/graph-summary")

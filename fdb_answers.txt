@@ -1,14 +1,9 @@
-Q1.
-[TODO] Answer in 2-4 sentences.
+Q1: FoundationDB separates transaction management and data storage to make the system clearer and easier to scale. TMS is mainly responsible for transaction-related tasks, such as assigning version numbers, checking for conflicts, and deciding whether a transaction can be committed; SS is mainly responsible for actually storing the data and providing read and write services. This separation allows each layer to focus on its specific task, making the system easier to maintain.
 
-Q2.
-[TODO] Answer in 2-4 sentences.
+Q2: When a write transaction commits, the component in the transaction management layer is responsible for checking for read-write conflicts. This check occurs before the transaction is actually committed, that is, when the system decides whether to accept the write. If it finds that another transaction has modified the data you have read, this transaction will be rejected to avoid inconsistency.
 
-Q3.
-[TODO] Answer in 2-4 sentences.
+Q3: The purpose of read version is to give a transaction a fixed "data snapshot," so that it sees the data at the same point in time when reading. This way, all reads within a transaction will be based on the same version, preventing the view from intermittently showing old and new data. This is one of the key reasons why FoundationDB can guarantee strong consistency.
 
-Q4.
-[TODO] Answer in 2-4 sentences.
+Q4: The biggest difference between a snapshot read and a regular read is that a snapshot read doesn't participate in normal read/write conflict detection like a regular read. Therefore, it's more suitable for observational, auxiliary reads, used when you don't want to increase transaction conflicts. If the read result is critical to transaction correctness, a regular read should be used; if you just want to check the data incidentally, a snapshot read is sufficient.
 
-Q5.
-[TODO] Answer in 2-4 sentences.
+Q5: FoundationDB claims cheap recovery because during normal operation, LogServers have already safely recorded the committed data. StorageServers can then use these logs to complete their data, so system recovery doesn't require a heavy redo log replay process. Simply put, the logs and storage work together normally, resulting in faster recovery after a problem occurs.

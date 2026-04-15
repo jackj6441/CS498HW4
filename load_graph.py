@@ -17,12 +17,18 @@ REQUIRED_COLUMNS = [
     "fare",
     "trip_seconds",
 ]
-
-
-def execute_write(session, work, *args):
-    if hasattr(session, "execute_write"):
-        return session.execute_write(work, *args)
-    return session.write_transaction(work, *args)
+LOAD_QUERY = """
+UNWIND $rows AS row
+MERGE (d:Driver {driver_id: row.driver_id})
+MERGE (c:Company {name: row.company})
+MERGE (a:Area {area_id: row.dropoff_area})
+MERGE (d)-[:WORKS_FOR]->(c)
+CREATE (d)-[:TRIP {
+    trip_id: row.trip_id,
+    fare: row.fare,
+    trip_seconds: row.trip_seconds
+}]->(a)
+"""
 
 
 def clear_database(tx) -> None:
@@ -30,39 +36,25 @@ def clear_database(tx) -> None:
 
 
 def load_batch(tx, rows) -> None:
-    tx.run(
-        """
-        UNWIND $rows AS row
-        MERGE (d:Driver {driver_id: row.driver_id})
-        MERGE (c:Company {name: row.company})
-        MERGE (a:Area {area_id: row.dropoff_area})
-        MERGE (d)-[:WORKS_FOR]->(c)
-        CREATE (d)-[:TRIP {
-            trip_id: row.trip_id,
-            fare: row.fare,
-            trip_seconds: row.trip_seconds
-        }]->(a)
-        """,
-        rows=rows,
-    )
+    tx.run(LOAD_QUERY, rows=rows)
 
 
-def batched(rows, batch_size):
-    for start in range(0, len(rows), batch_size):
-        yield rows[start : start + batch_size]
-
-
-def load_rows() -> list[dict]:
+def main() -> None:
     if not INPUT_CSV.exists():
         raise SystemExit(f"Error: input file not found: {INPUT_CSV}")
 
-    df = pd.read_csv(INPUT_CSV)
+    neo4j_uri = os.getenv("NEO4J_URI", DEFAULT_NEO4J_URI)
+    neo4j_user = os.getenv("NEO4J_USER", DEFAULT_NEO4J_USER)
+    neo4j_password = os.getenv("NEO4J_PASSWORD")
 
-    missing_columns = [column for column in REQUIRED_COLUMNS if column not in df.columns]
-    if missing_columns:
-        missing_list = ", ".join(missing_columns)
+    if not neo4j_password:
+        raise SystemExit("Error: NEO4J_PASSWORD environment variable is required.")
+
+    try:
+        df = pd.read_csv(INPUT_CSV, usecols=REQUIRED_COLUMNS)
+    except ValueError as exc:
         raise SystemExit(
-            f"Error: missing required columns in {INPUT_CSV}: {missing_list}"
+            f"Error: failed to read required columns from {INPUT_CSV}: {exc}"
         )
 
     rows = []
@@ -78,19 +70,6 @@ def load_rows() -> list[dict]:
             }
         )
 
-    return rows
-
-
-def main() -> None:
-    neo4j_uri = os.getenv("NEO4J_URI", DEFAULT_NEO4J_URI)
-    neo4j_user = os.getenv("NEO4J_USER", DEFAULT_NEO4J_USER)
-    neo4j_password = os.getenv("NEO4J_PASSWORD")
-
-    if not neo4j_password:
-        raise SystemExit("Error: NEO4J_PASSWORD environment variable is required.")
-
-    rows = load_rows()
-
     driver = GraphDatabase.driver(
         neo4j_uri,
         auth=(neo4j_user, neo4j_password),
@@ -101,9 +80,14 @@ def main() -> None:
             driver.verify_connectivity()
 
         with driver.session() as session:
-            execute_write(session, clear_database)
-            for batch in batched(rows, BATCH_SIZE):
-                execute_write(session, load_batch, batch)
+            write = (
+                session.execute_write
+                if hasattr(session, "execute_write")
+                else session.write_transaction
+            )
+            write(clear_database)
+            for start in range(0, len(rows), BATCH_SIZE):
+                write(load_batch, rows[start : start + BATCH_SIZE])
     finally:
         driver.close()
 
