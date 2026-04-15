@@ -1,1 +1,1 @@
-[TODO] Replace with your deployed VM address in the format IP:PORT.
+34.172.170.90:5000
